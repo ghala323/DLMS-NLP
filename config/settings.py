@@ -141,23 +141,28 @@ AWS_SECRET_ACCESS_KEY   = env('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_REGION_NAME      = env('AWS_S3_REGION_NAME')
 
-# File will be accessible via this URL pattern
 AWS_S3_CUSTOM_DOMAIN = (
     f"{env('AWS_STORAGE_BUCKET_NAME')}"
     f".s3.{env('AWS_S3_REGION_NAME')}.amazonaws.com"
 )
 
-# Organize uploads into folders by type
-AWS_LOCATION = 'assets'
-
-# Don't overwrite files with the same name
+AWS_LOCATION         = 'assets'
 AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL      = None
 
-# Files are private by default — only accessible via signed URLs
-AWS_DEFAULT_ACL = None
+# ── LAYER 1: AES-256 Server-Side Encryption ───────────────────
+# Every file uploaded to S3 is automatically encrypted at rest
+# using AES-256. This is free and requires no extra code.
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
+    'CacheControl':    'max-age=86400',
+    'ServerSideEncryption': 'AES256',   # ← This is the key line
 }
+
+# Files are only accessible via signed URLs (expire after 1 hour)
+AWS_QUERYSTRING_AUTH    = True
+AWS_QUERYSTRING_EXPIRE  = 3600   # 1 hour in seconds
+
+
 
 # === REST Framework Settings ===
 REST_FRAMEWORK = {
@@ -169,3 +174,19 @@ REST_FRAMEWORK = {
     ],
 }
 
+# === Field-Level Encryption ===
+# Used to encrypt sensitive fields in the database
+# (national ID, phone numbers, access codes)
+FIELD_ENCRYPTION_KEY = env('FIELD_ENCRYPTION_KEY')
+
+
+# === LAYER 3: HTTPS / Transit Encryption ===
+# Forces all cookies to be sent over HTTPS only
+# Active in production (when DEBUG=False)
+if not DEBUG:
+    SECURE_SSL_REDIRECT          = True
+    SESSION_COOKIE_SECURE        = True
+    CSRF_COOKIE_SECURE           = True
+    SECURE_HSTS_SECONDS          = 31536000   # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD          = True

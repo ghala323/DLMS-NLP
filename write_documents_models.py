@@ -1,4 +1,4 @@
-from django.db import models
+new_content = """from django.db import models
 from django.contrib.auth.models import User
 from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailField
 import uuid
@@ -122,3 +122,9 @@ class DeathVerification(models.Model):
 
     def _str_(self):
         return f"DeathVerification: {self.user.username} | {self.status}"
+"""
+
+with open('documents/models.py', 'w', encoding='utf-8') as f:
+    f.write(new_content)
+
+print('Done!')

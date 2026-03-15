@@ -1,4 +1,6 @@
-from django.db import models
+content = open('users/models.py', 'r', encoding='utf-8').read()
+
+new_content = """from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -52,3 +54,9 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
+"""
+
+with open('users/models.py', 'w', encoding='utf-8') as f:
+    f.write(new_content)
+
+print('Done!')
