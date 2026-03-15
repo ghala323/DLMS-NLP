@@ -85,6 +85,9 @@ class Beneficiary(models.Model):
     def _str_(self):
         return f"{self.name} ({self.relationship}) - {self.user.username}"
 
+  class Meta:
+        verbose_name_plural = 'Beneficiaries'
+
 
 class AssetBeneficiary(models.Model):
     asset       = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='asset_beneficiaries')
