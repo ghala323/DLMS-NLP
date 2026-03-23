@@ -8,9 +8,13 @@ from .models import AnalysisResult
 
 @api_view(['POST'])
 def test_fuzzy(request):
-    text = request.data.get('text', '')
+    text = request.data.get('text', '').strip()
+    if not text:
+        return Response({"error": "No text provided"}, status=400)
+
     fuzzy = fuzzy_match_score(text)
     is_rule, _ = is_sensitive(text)
+
     return Response({
         "text": text,
         "fuzzy_score": fuzzy,
@@ -20,9 +24,13 @@ def test_fuzzy(request):
 
 @api_view(['POST'])
 def test_ml(request):
-    text = request.data.get('text', '')
+    text = request.data.get('text', '').strip()
+    if not text:
+        return Response({"error": "No text provided"}, status=400)
+
     ml = ml_score(text)
     is_ml, _ = is_sensitive_ml(text)
+
     return Response({
         "text": text,
         "ml_score": ml,
@@ -40,17 +48,22 @@ def test_hybrid(request):
     - تحدد المستوى Level
     - تخزن في قاعدة البيانات
     """
-    text = request.data.get('text', '')
+    text = request.data.get('text', '').strip()
+    if not text:
+        return Response({"error": "No text provided"}, status=400)
 
     result = final_classification(text)
 
-    # حفظ النتيجة في DB
-    AnalysisResult.objects.create(
-        text=text,
-        fuzzy_score=result['fuzzy_score'],
-        ml_score=result['ml_score'],
-        final_score=result['final_score'],
-        level=result['level']
-    )
+    # حفظ النتيجة في DB مع حماية ضد الأخطاء
+    try:
+        AnalysisResult.objects.create(
+            text=text,
+            fuzzy_score=result['fuzzy_score'],
+            ml_score=result['ml_score'],
+            final_score=result['final_score'],
+            level=result['level']
+        )
+    except Exception as e:
+        return Response({"error": f"Database error: {str(e)}"}, status=500)
 
     return Response(result)
