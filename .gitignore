@@ -1,26 +1,26 @@
-# Environment variables
-.env
-
-# Virtual environment
-.venv/
-venv/
-
-# Python cache
+# Python
 __pycache__/
-*.py[cod]
-*.pyo
 *.pyc
+*.pyo
+*.pyd
+.venv/
+*.egg-info/
 
 # Django
 db.sqlite3
 *.log
 
-# Windows
+# Desktop fix scripts (not part of project)
+fix_*.py
+debug_*.py
+new_*.py
+update_*.py
+add_*.py
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
 Thumbs.db
-desktop.ini
-
-# VS Code
-.vscode/
-
-# AWS credentials
-*.json

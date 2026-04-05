@@ -1,48 +1,51 @@
-from .rule_based import HIGH_KEYWORDS, MEDIUM_KEYWORDS, LOW_KEYWORDS, fuzzy_match_score
-from .ml_model import ml_score
+from .rule_based import (
+    HIGH_KEYWORDS, MEDIUM_KEYWORDS, LOW_KEYWORDS,
+    fuzzy_match_score, classify_rule_based
+)
+from .ml_model import classify_ml
+
 
 def preprocess(text):
     return text.strip().lower() if text else ""
 
+
 def final_classification(text):
+    """
+    Hybrid classifier combining rule-based fuzzy matching and TF-IDF ML model.
+    Returns a dict with scores and final level (High/Medium/Low).
+    """
     text = preprocess(text)
 
-    fuzzy = fuzzy_match_score(text)
-    
-    try:
-        ml = ml_score(text)
-    except:
-        ml = 0
+    # Rule-based scores per category
+    fuzzy_high   = fuzzy_match_score(text, HIGH_KEYWORDS)
+    fuzzy_medium = fuzzy_match_score(text, MEDIUM_KEYWORDS)
+    fuzzy_low    = fuzzy_match_score(text, LOW_KEYWORDS)
 
-    # --------- تحديد المستوى حسب الكلمات مباشرة ---------
-    text_lower = text.lower()
-    level = None
+    # ML scores per category
+    ml_label, ml_confidence = classify_ml(text)
+    ml_high   = ml_confidence if ml_label == "High"   else 0.0
+    ml_medium = ml_confidence if ml_label == "Medium" else 0.0
+    ml_low    = ml_confidence if ml_label == "Low"    else 0.0
 
-    # تحقق أولاً من High Keywords
-    if any(k.lower() in text_lower for k in HIGH_KEYWORDS):
-        level = "HIGH"
-    elif any(k.lower() in text_lower for k in MEDIUM_KEYWORDS):
-        level = "MEDIUM"
-    elif any(k.lower() in text_lower for k in LOW_KEYWORDS):
-        level = "LOW"
-    
-    # --------- إذا ما طابق أي كلمة، نستخدم score كخطة بديلة ---------
-    if not level:
-        # وزن أفضل للـ fuzzy
-        final_score = (0.3 * fuzzy) + (0.7 * ml)
-        if final_score >= 0.85:
-            level = "HIGH"
-        elif final_score >= 0.5:
-            level = "MEDIUM"
-        else:
-            level = "LOW"
-    else:
-        # إذا تم تحديد Level بالكلمة، نقدر نحسب final_score متوسط للتقرير
-        final_score = (0.3 * fuzzy) + (0.7 * ml)
+    # Combined scores: 70% rule-based, 30% ML
+    score_high   = round((0.7 * fuzzy_high)   + (0.3 * ml_high),   4)
+    score_medium = round((0.7 * fuzzy_medium) + (0.3 * ml_medium), 4)
+    score_low    = round((0.7 * fuzzy_low)    + (0.3 * ml_low),    4)
+
+    scores = {"High": score_high, "Medium": score_medium, "Low": score_low}
+    level = max(scores, key=scores.get)
+
+    # Fallback if all scores are very low
+    if scores[level] < 0.2:
+        level = "Low"
 
     return {
-        "fuzzy_score": fuzzy,
-        "ml_score": ml,
-        "final_score": final_score,
-        "level": level
+        "level":        level,
+        "fuzzy_score":  max(fuzzy_high, fuzzy_medium, fuzzy_low),
+        "ml_label":     ml_label,
+        "ml_score":     round(ml_confidence, 4),
+        "final_score":  scores[level],
+        "score_high":   score_high,
+        "score_medium": score_medium,
+        "score_low":    score_low,
     }
