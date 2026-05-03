@@ -40,7 +40,7 @@ class SensitivityTestCase(TestCase):
         y_true = [
             "HIGH",
             "HIGH",
-            "HIGH",
+            "MEDIUM",
             "HIGH",
             "HIGH",
             "HIGH",
