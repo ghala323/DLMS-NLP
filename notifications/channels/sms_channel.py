@@ -6,19 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 def send_sms(to: str, body: str) -> bool:
-    """
-    Sends an SMS message via Infobip.
-
-    Args:
-        to   : recipient phone number in E.164 format
-               e.g. "+966501234567" (Saudi number)
-        body : the text message content
-
-    Returns:
-        True  if the SMS was sent successfully
-        False if something went wrong (error is logged)
-    """
-
     if not to:
         logger.warning("send_sms called with empty 'to' number. Skipped.")
         return False
