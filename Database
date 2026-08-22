@@ -1,0 +1,109 @@
+from django.db import models
+
+
+# Member
+class Member(models.Model):
+    member_id = models.AutoField(primary_key=True)
+    fname = models.CharField(max_length=100)
+    lname = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=20)
+    password = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    nationality = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.fname} {self.lname}"
+
+
+# Death Confirmation
+class DeathConfirmation(models.Model):
+    certificate_id = models.AutoField(primary_key=True)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    absher_reference_number = models.CharField(max_length=100)
+    issue_status = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"Certificate {self.certificate_id}"
+
+
+# Digital Asset
+class DigitalAsset(models.Model):
+    asset_id = models.AutoField(primary_key=True)
+    asset_type = models.CharField(max_length=100)
+    posthumous_action = models.CharField(max_length=200)
+    privacy_level = models.CharField(max_length=50)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.asset_type
+
+
+# Beneficiary
+class Beneficiary(models.Model):
+    beneficiary_id = models.AutoField(primary_key=True)
+    phone = models.CharField(max_length=20)
+    relationship = models.CharField(max_length=100)
+    access_code = models.CharField(max_length=100)
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
+# Verification
+class Verification(models.Model):
+    verification_id = models.AutoField(primary_key=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    verification_status = models.CharField(max_length=50)
+    verification_code = models.CharField(max_length=100)
+    sent_via = models.CharField(max_length=50)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Verification {self.verification_id}"
+
+
+# Member Activity
+class MemberActivity(models.Model):
+    activity_id = models.AutoField(primary_key=True)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    activity_status = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Activity {self.activity_id}"
+
+
+# Notification
+class Notification(models.Model):
+    notification_id = models.AutoField(primary_key=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    sent_through = models.CharField(max_length=50)
+    type = models.CharField(max_length=100)
+
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    beneficiary = models.ForeignKey(
+        Beneficiary,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"Notification {self.notification_id}"
+
+
+# Member Assets
+class MemberAsset(models.Model):
+    asset = models.ForeignKey(DigitalAsset, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    uploaded_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('asset', 'member')
+
+    def __str__(self):
+        return f"{self.member} - {self.asset}"
